@@ -7,6 +7,8 @@ import com.workpilot.authservice.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.workpilot.authservice.dto.LoginRequest;
+import com.workpilot.authservice.exception.InvalidCredentialsException;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -37,4 +39,32 @@ public class AuthServiceImpl implements AuthService {
         // Save user in database
         return userRepository.save(user);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User login(LoginRequest request) {
+
+        // 1. Find user by email
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() ->
+                        new InvalidCredentialsException("Invalid email or password")
+                );
+
+        // 2. Check whether account is enabled
+        if (!Boolean.TRUE.equals(user.getEnabled())) {
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        // 3. Verify raw password against stored BCrypt hash
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                user.getPasswordHash()
+        )) {
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        // 4. Return authenticated user
+        return user;
+    }
+
 }

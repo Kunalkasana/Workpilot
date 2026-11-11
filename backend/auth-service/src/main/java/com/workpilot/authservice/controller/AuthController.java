@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.workpilot.authservice.dto.LoginRequest;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -37,4 +38,27 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody LoginRequest request) {
+
+        // Authenticate user
+        User user = authService.login(request);
+
+        // Generate JWT
+        String token = jwtService.generateToken(user);
+
+        // Build response
+        AuthResponse response = new AuthResponse(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                token,
+                "Bearer"
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
 }
