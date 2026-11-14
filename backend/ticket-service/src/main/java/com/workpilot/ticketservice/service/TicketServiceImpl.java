@@ -8,6 +8,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import com.workpilot.ticketservice.exception.TicketNotFoundException;
 import com.workpilot.ticketservice.entity.Ticket;
+import com.workpilot.ticketservice.dto.AssignTicketRequest;
 import java.util.UUID;
 import java.util.List;
 
@@ -73,5 +74,19 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new TicketNotFoundException("Ticket not found with ID: " + ticketId));
 
         ticketRepository.delete(ticket);
+    }
+    @Override
+    public TicketResponse assignTicket(UUID ticketId, AssignTicketRequest request) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() ->
+                        new TicketNotFoundException(
+                                "Ticket not found with ID: " + ticketId
+                        ));
+
+        ticket.setAssignedTo(request.getAssignedTo());
+
+        Ticket updatedTicket = ticketRepository.save(ticket);
+
+        return modelMapper.map(updatedTicket, TicketResponse.class);
     }
 }

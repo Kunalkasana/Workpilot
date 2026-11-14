@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import com.workpilot.ticketservice.dto.UpdateTicketRequest;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import com.workpilot.ticketservice.dto.AssignTicketRequest;
+import org.springframework.web.bind.annotation.PatchMapping;
 
 @RestController
 @RequestMapping("/api/tickets")
@@ -71,5 +73,15 @@ public class TicketController {
         ticketService.deleteTicket(id);
 
         return ResponseEntity.noContent().build();
+    }
+    @PatchMapping("/{id}/assign")
+    public ResponseEntity<TicketResponse> assignTicket(
+            @PathVariable UUID id,
+            @Valid @RequestBody AssignTicketRequest request) {
+
+        TicketResponse response =
+                ticketService.assignTicket(id, request);
+
+        return ResponseEntity.ok(response);
     }
 }
