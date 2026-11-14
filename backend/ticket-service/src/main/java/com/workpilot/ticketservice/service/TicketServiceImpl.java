@@ -6,13 +6,10 @@ import com.workpilot.ticketservice.dto.UpdateTicketRequest;
 import com.workpilot.ticketservice.repository.TicketRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import com.workpilot.ticketservice.dto.CreateTicketRequest;
-import com.workpilot.ticketservice.dto.TicketResponse;
+import com.workpilot.ticketservice.exception.TicketNotFoundException;
 import com.workpilot.ticketservice.entity.Ticket;
 import java.util.UUID;
-
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class TicketServiceImpl implements TicketService {
@@ -42,7 +39,7 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public TicketResponse getTicketById(UUID ticketId) {
-        Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new RuntimeException("Ticket not found"));
+        Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new TicketNotFoundException("Ticket not found with ID: " + ticketId));
         return modelMapper.map(ticket, TicketResponse.class);
     }
 
@@ -60,7 +57,7 @@ public class TicketServiceImpl implements TicketService {
     public TicketResponse updateTicket(UUID ticketId, UpdateTicketRequest request) {
 
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found with ID: " + ticketId));
 
         modelMapper.map(request, ticket);
 
@@ -73,7 +70,7 @@ public class TicketServiceImpl implements TicketService {
     public void deleteTicket(UUID ticketId) {
 
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found with ID: " + ticketId));
 
         ticketRepository.delete(ticket);
     }
