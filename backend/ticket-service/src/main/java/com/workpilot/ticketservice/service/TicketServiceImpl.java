@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.workpilot.ticketservice.exception.TicketNotFoundException;
 import com.workpilot.ticketservice.entity.Ticket;
 import com.workpilot.ticketservice.dto.AssignTicketRequest;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 import java.util.List;
 
@@ -17,13 +18,16 @@ public class TicketServiceImpl implements TicketService {
 
     private final TicketRepository ticketRepository;
     private final ModelMapper modelMapper;
+    private final ConversationService conversationService;
 
     public TicketServiceImpl(
             TicketRepository ticketRepository,
-            ModelMapper modelMapper) {
+            ModelMapper modelMapper,
+            ConversationService conversationService) {
 
         this.ticketRepository = ticketRepository;
         this.modelMapper = modelMapper;
+        this.conversationService = conversationService;
     }
 
     @Override
@@ -68,10 +72,13 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    @Transactional
     public void deleteTicket(UUID ticketId) {
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException("Ticket not found with ID: " + ticketId));
+
+        conversationService.deleteConversationByTicketId(ticketId);
 
         ticketRepository.delete(ticket);
     }
