@@ -6,8 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.util.UUID;
-
 public class UpdateTicketRequest {
 
     @NotBlank(message = "Title is required")
@@ -23,7 +21,7 @@ public class UpdateTicketRequest {
     @NotNull(message = "Priority is required")
     private TicketPriority priority;
 
-    private UUID assignedTo;
+
 
     public String getTitle() {
         return title;
@@ -55,13 +53,5 @@ public class UpdateTicketRequest {
 
     public void setPriority(TicketPriority priority) {
         this.priority = priority;
-    }
-
-    public UUID getAssignedTo() {
-        return assignedTo;
-    }
-
-    public void setAssignedTo(UUID assignedTo) {
-        this.assignedTo = assignedTo;
     }
 }
