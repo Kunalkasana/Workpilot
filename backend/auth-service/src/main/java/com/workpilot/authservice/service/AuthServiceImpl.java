@@ -9,16 +9,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.workpilot.authservice.dto.LoginRequest;
 import com.workpilot.authservice.exception.InvalidCredentialsException;
+import com.workpilot.authservice.service.WorkspaceService;
 
 @Service
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final WorkspaceService workspaceService;
 
-    public AuthServiceImpl(UserRepository userRepository,PasswordEncoder passwordEncoder) {
+    public AuthServiceImpl(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder,
+                           WorkspaceService workspaceService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.workspaceService = workspaceService;
     }
     @Override
     @Transactional
@@ -37,7 +42,12 @@ public class AuthServiceImpl implements AuthService {
                 true
         );
         // Save user in database
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Every new user starts with a default workspace and an OWNER membership.
+        workspaceService.createWorkspace(savedUser.getFullName() + "'s Workspace", savedUser);
+
+        return savedUser;
     }
 
     @Override
