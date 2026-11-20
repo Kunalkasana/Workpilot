@@ -9,6 +9,9 @@ import com.workpilot.authservice.repository.WorkspaceRepository;
 import com.workpilot.authservice.util.SlugGenerator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.workpilot.authservice.dto.WorkspaceResponse;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class WorkspaceServiceImpl implements WorkspaceService {
@@ -36,5 +39,18 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
         return membershipRepository.save(
                 new WorkspaceMembership(owner, workspace, WorkspaceRole.OWNER));
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public List<WorkspaceResponse> getMyWorkspaces(User user) {
+
+        return membershipRepository.findAllByUser_Id(user.getId()).stream()
+                .sorted(Comparator.comparing(WorkspaceMembership::getJoinedAt))
+                .map(membership -> new WorkspaceResponse(
+                        membership.getWorkspace().getId(),
+                        membership.getWorkspace().getName(),
+                        membership.getWorkspace().getSlug(),
+                        membership.getRole()))
+                .toList();
     }
 }
