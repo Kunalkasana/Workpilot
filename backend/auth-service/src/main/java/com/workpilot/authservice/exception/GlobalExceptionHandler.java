@@ -46,5 +46,39 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(response);
     }
+    @ExceptionHandler({WorkspaceNotFoundException.class, UserNotFoundException.class})
+    public ResponseEntity<Map<String, String>> handleNotFound(RuntimeException exception) {
+
+        Map<String, String> response = Map.of(
+                "error", "Not Found",
+                "message", exception.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(MemberAlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handleMemberAlreadyExists(
+            MemberAlreadyExistsException exception) {
+
+        Map<String, String> response = Map.of(
+                "error", "Conflict",
+                "message", exception.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(InsufficientPermissionException.class)
+    public ResponseEntity<Map<String, String>> handleInsufficientPermission(
+            InsufficientPermissionException exception) {
+
+        Map<String, String> response = Map.of(
+                "error", "Forbidden",
+                "message", exception.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
 
 }

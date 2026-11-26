@@ -12,19 +12,30 @@ import org.springframework.transaction.annotation.Transactional;
 import com.workpilot.authservice.dto.WorkspaceResponse;
 import java.util.Comparator;
 import java.util.List;
+import com.workpilot.authservice.dto.AddMemberRequest;
+import com.workpilot.authservice.dto.MemberResponse;
+import com.workpilot.authservice.exception.InsufficientPermissionException;
+import com.workpilot.authservice.exception.MemberAlreadyExistsException;
+import com.workpilot.authservice.exception.UserNotFoundException;
+import com.workpilot.authservice.exception.WorkspaceNotFoundException;
+import com.workpilot.authservice.repository.UserRepository;
+import java.util.UUID;
 
 @Service
 public class WorkspaceServiceImpl implements WorkspaceService {
 
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMembershipRepository membershipRepository;
+    private final UserRepository userRepository;
 
     public WorkspaceServiceImpl(
             WorkspaceRepository workspaceRepository,
-            WorkspaceMembershipRepository membershipRepository) {
+            WorkspaceMembershipRepository membershipRepository,
+            UserRepository userRepository) {
 
         this.workspaceRepository = workspaceRepository;
         this.membershipRepository = membershipRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -52,5 +63,50 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                         membership.getWorkspace().getSlug(),
                         membership.getRole()))
                 .toList();
+    }
+    @Override
+    @Transactional
+    public MemberResponse addMember(UUID workspaceId, AddMemberRequest request, User caller) {
+
+        // Not a member (or no such workspace): behave the same, reveal nothing.
+        WorkspaceMembership callerMembership = membershipRepository
+                .findByUser_IdAndWorkspace_Id(caller.getId(), workspaceId)
+                .orElseThrow(() -> new WorkspaceNotFoundException("Workspace not found"));
+
+        WorkspaceRole callerRole = callerMembership.getRole();
+        WorkspaceRole newRole = request.getRole();
+
+        if (callerRole != WorkspaceRole.OWNER && callerRole != WorkspaceRole.ADMIN) {
+            throw new InsufficientPermissionException(
+                    "Only owners and admins can add members");
+        }
+        if (newRole == WorkspaceRole.OWNER) {
+            throw new InsufficientPermissionException(
+                    "The owner role cannot be assigned");
+        }
+        if (newRole == WorkspaceRole.ADMIN && callerRole != WorkspaceRole.OWNER) {
+            throw new InsufficientPermissionException(
+                    "Only the owner can add admins");
+        }
+
+        User newMember = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UserNotFoundException(
+                        "No registered user with that email"));
+
+        if (membershipRepository.existsByUser_IdAndWorkspace_Id(
+                newMember.getId(), workspaceId)) {
+            throw new MemberAlreadyExistsException(
+                    "User is already a member of this workspace");
+        }
+
+        WorkspaceMembership saved = membershipRepository.save(
+                new WorkspaceMembership(
+                        newMember, callerMembership.getWorkspace(), newRole));
+
+        return new MemberResponse(
+                newMember.getId(),
+                newMember.getFullName(),
+                newMember.getEmail(),
+                saved.getRole());
     }
 }

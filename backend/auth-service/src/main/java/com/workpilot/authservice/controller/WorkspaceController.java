@@ -14,7 +14,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
-import java.util.List;
+import java.util.List;import com.workpilot.authservice.dto.AddMemberRequest;
+import com.workpilot.authservice.dto.MemberResponse;
+import org.springframework.web.bind.annotation.PathVariable;
+import java.util.UUID;
+
 
 @RestController
 @RequestMapping("/api/workspaces")
@@ -57,5 +61,20 @@ public class WorkspaceController {
         }
 
         return ResponseEntity.ok(workspaceService.getMyWorkspaces(user));
+    }
+    @PostMapping("/{workspaceId}/members")
+    public ResponseEntity<MemberResponse> addMember(
+            @PathVariable UUID workspaceId,
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody AddMemberRequest request) {
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        MemberResponse response =
+                workspaceService.addMember(workspaceId, request, user);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
