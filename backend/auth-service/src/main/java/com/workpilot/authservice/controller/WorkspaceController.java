@@ -20,16 +20,19 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.UUID;
 import com.workpilot.authservice.dto.ChangeRoleRequest;
 import org.springframework.web.bind.annotation.PatchMapping;
-
+import com.workpilot.authservice.dto.AuthResponse;
+import com.workpilot.authservice.service.JwtService;
 
 @RestController
 @RequestMapping("/api/workspaces")
 public class WorkspaceController {
 
     private final WorkspaceService workspaceService;
+    private final JwtService jwtService;
 
-    public WorkspaceController(WorkspaceService workspaceService) {
+    public WorkspaceController(WorkspaceService workspaceService,JwtService jwtService) {
         this.workspaceService = workspaceService;
+        this.jwtService = jwtService;
     }
 
     @PostMapping
@@ -92,5 +95,25 @@ public class WorkspaceController {
 
         return ResponseEntity.ok(
                 workspaceService.changeMemberRole(workspaceId, userId, request, user));
+    }
+    @PostMapping("/{workspaceId}/switch")
+    public ResponseEntity<AuthResponse> switchWorkspace(
+            @PathVariable UUID workspaceId,
+            @AuthenticationPrincipal User user) {
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        WorkspaceResponse workspace = workspaceService.getWorkspaceForUser(workspaceId, user);
+
+        String token = jwtService.generateToken(user, workspace.getId(), workspace.getRole());
+
+        return ResponseEntity.ok(new AuthResponse(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                token,
+                "Bearer"));
     }
 }

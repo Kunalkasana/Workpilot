@@ -161,4 +161,20 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 member.getEmail(),
                 saved.getRole());
     }
+    @Override
+    @Transactional(readOnly = true)
+    public WorkspaceResponse getWorkspaceForUser(UUID workspaceId, User user) {
+
+        WorkspaceMembership membership = membershipRepository
+                .findByUser_IdAndWorkspace_Id(user.getId(), workspaceId)
+                .orElseThrow(() -> new WorkspaceNotFoundException("Workspace not found"));
+
+        Workspace workspace = membership.getWorkspace();
+
+        return new WorkspaceResponse(
+                workspace.getId(),
+                workspace.getName(),
+                workspace.getSlug(),
+                membership.getRole());
+    }
 }

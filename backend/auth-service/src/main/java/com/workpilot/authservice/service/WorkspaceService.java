@@ -17,4 +17,5 @@ public interface WorkspaceService {
     MemberResponse addMember(UUID workspaceId, AddMemberRequest request, User caller);
     MemberResponse changeMemberRole(UUID workspaceId, UUID targetUserId, ChangeRoleRequest request, User caller);
     Optional<WorkspaceResponse> getDefaultWorkspace(User user);
+    WorkspaceResponse getWorkspaceForUser(UUID workspaceId, User user);
 }

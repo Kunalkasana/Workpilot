@@ -35,9 +35,10 @@ public class SecurityConfig {
         );
 
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
-                .anyRequest().permitAll()
+                .requestMatchers("/error").permitAll()
+                .anyRequest().authenticated()
         );
 
         http.exceptionHandling(exception ->
