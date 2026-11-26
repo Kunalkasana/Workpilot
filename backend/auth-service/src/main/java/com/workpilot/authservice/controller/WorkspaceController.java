@@ -18,6 +18,8 @@ import java.util.List;import com.workpilot.authservice.dto.AddMemberRequest;
 import com.workpilot.authservice.dto.MemberResponse;
 import org.springframework.web.bind.annotation.PathVariable;
 import java.util.UUID;
+import com.workpilot.authservice.dto.ChangeRoleRequest;
+import org.springframework.web.bind.annotation.PatchMapping;
 
 
 @RestController
@@ -76,5 +78,19 @@ public class WorkspaceController {
                 workspaceService.addMember(workspaceId, request, user);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+    @PatchMapping("/{workspaceId}/members/{userId}")
+    public ResponseEntity<MemberResponse> changeMemberRole(
+            @PathVariable UUID workspaceId,
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody ChangeRoleRequest request) {
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(
+                workspaceService.changeMemberRole(workspaceId, userId, request, user));
     }
 }

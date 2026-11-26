@@ -20,6 +20,7 @@ import com.workpilot.authservice.exception.UserNotFoundException;
 import com.workpilot.authservice.exception.WorkspaceNotFoundException;
 import com.workpilot.authservice.repository.UserRepository;
 import java.util.UUID;
+import com.workpilot.authservice.dto.ChangeRoleRequest;
 
 @Service
 public class WorkspaceServiceImpl implements WorkspaceService {
@@ -107,6 +108,45 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 newMember.getId(),
                 newMember.getFullName(),
                 newMember.getEmail(),
+                saved.getRole());
+    }
+    @Override
+    @Transactional
+    public MemberResponse changeMemberRole(
+            UUID workspaceId, UUID targetUserId, ChangeRoleRequest request, User caller) {
+
+        WorkspaceMembership callerMembership = membershipRepository
+                .findByUser_IdAndWorkspace_Id(caller.getId(), workspaceId)
+                .orElseThrow(() -> new WorkspaceNotFoundException("Workspace not found"));
+
+        if (callerMembership.getRole() != WorkspaceRole.OWNER) {
+            throw new InsufficientPermissionException(
+                    "Only the owner can change roles");
+        }
+        if (request.getRole() == WorkspaceRole.OWNER) {
+            throw new InsufficientPermissionException(
+                    "The owner role cannot be assigned");
+        }
+
+        WorkspaceMembership target = membershipRepository
+                .findByUser_IdAndWorkspace_Id(targetUserId, workspaceId)
+                .orElseThrow(() -> new UserNotFoundException(
+                        "User is not a member of this workspace"));
+
+        if (target.getRole() == WorkspaceRole.OWNER) {
+            throw new InsufficientPermissionException(
+                    "The owner's role cannot be changed");
+        }
+
+        target.setRole(request.getRole());
+        WorkspaceMembership saved = membershipRepository.save(target);
+
+        User member = saved.getUser();
+
+        return new MemberResponse(
+                member.getId(),
+                member.getFullName(),
+                member.getEmail(),
                 saved.getRole());
     }
 }
