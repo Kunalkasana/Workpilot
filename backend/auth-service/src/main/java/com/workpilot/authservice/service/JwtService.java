@@ -1,8 +1,9 @@
-
 package com.workpilot.authservice.service;
 
 import com.workpilot.authservice.entity.User;
+import com.workpilot.authservice.entity.WorkspaceRole;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -31,8 +32,13 @@ public class JwtService {
         this.expirationMs = expirationMs;
     }
 
-    // Generate a signed JWT for the user.
+    // Token without workspace claims (for users who have no workspace).
     public String generateToken(User user) {
+        return generateToken(user, null, null);
+    }
+
+    // Token carrying the user's active workspace and role.
+    public String generateToken(User user, UUID workspaceId, WorkspaceRole role) {
 
         Date now = new Date();
 
@@ -40,13 +46,18 @@ public class JwtService {
                 now.getTime() + expirationMs
         );
 
-        return Jwts.builder()
+        JwtBuilder builder = Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
                 .issuedAt(now)
-                .expiration(expiration)
-                .signWith(signingKey)
-                .compact();
+                .expiration(expiration);
+
+        if (workspaceId != null && role != null) {
+            builder.claim("workspaceId", workspaceId.toString())
+                    .claim("role", role.name());
+        }
+
+        return builder.signWith(signingKey).compact();
     }
 
     // Verify the signature and expiration, then return the claims.

@@ -8,6 +8,7 @@ import com.workpilot.authservice.dto.AddMemberRequest;
 import com.workpilot.authservice.dto.MemberResponse;
 import java.util.UUID;
 import com.workpilot.authservice.dto.ChangeRoleRequest;
+import java.util.Optional;
 
 public interface WorkspaceService {
 
@@ -15,4 +16,5 @@ public interface WorkspaceService {
     List<WorkspaceResponse> getMyWorkspaces(User user);
     MemberResponse addMember(UUID workspaceId, AddMemberRequest request, User caller);
     MemberResponse changeMemberRole(UUID workspaceId, UUID targetUserId, ChangeRoleRequest request, User caller);
+    Optional<WorkspaceResponse> getDefaultWorkspace(User user);
 }

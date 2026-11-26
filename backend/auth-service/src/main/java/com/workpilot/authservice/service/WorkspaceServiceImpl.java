@@ -21,6 +21,7 @@ import com.workpilot.authservice.exception.WorkspaceNotFoundException;
 import com.workpilot.authservice.repository.UserRepository;
 import java.util.UUID;
 import com.workpilot.authservice.dto.ChangeRoleRequest;
+import java.util.Optional;
 
 @Service
 public class WorkspaceServiceImpl implements WorkspaceService {
@@ -37,6 +38,17 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         this.workspaceRepository = workspaceRepository;
         this.membershipRepository = membershipRepository;
         this.userRepository = userRepository;
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<WorkspaceResponse> getDefaultWorkspace(User user) {
+
+        return membershipRepository.findFirstByUser_IdOrderByJoinedAtAsc(user.getId())
+                .map(membership -> new WorkspaceResponse(
+                        membership.getWorkspace().getId(),
+                        membership.getWorkspace().getName(),
+                        membership.getWorkspace().getSlug(),
+                        membership.getRole()));
     }
 
     @Override

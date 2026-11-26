@@ -10,24 +10,34 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.workpilot.authservice.dto.LoginRequest;
+import com.workpilot.authservice.service.WorkspaceService;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+    private String issueToken(User user) {
+        return workspaceService.getDefaultWorkspace(user)
+                .map(ws -> jwtService.generateToken(user, ws.getId(), ws.getRole()))
+                .orElseGet(() -> jwtService.generateToken(user));
+    }
 
     private final AuthService authService;
     private final JwtService jwtService;
+    private final WorkspaceService workspaceService;
 
-    public AuthController(AuthService authService, JwtService jwtService) {
+    public AuthController(AuthService authService,
+                          JwtService jwtService,
+                          WorkspaceService workspaceService) {
         this.authService = authService;
         this.jwtService = jwtService;
+        this.workspaceService = workspaceService;
     }
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
 
         User user = authService.register(request);
-        String token = jwtService.generateToken(user);
+        String token = issueToken(user);
         AuthResponse response = new AuthResponse(
                 user.getId(),
                 user.getFullName(),
@@ -47,7 +57,7 @@ public class AuthController {
         User user = authService.login(request);
 
         // Generate JWT
-        String token = jwtService.generateToken(user);
+        String token = issueToken(user);
 
         // Build response
         AuthResponse response = new AuthResponse(
@@ -60,5 +70,4 @@ public class AuthController {
 
         return ResponseEntity.ok(response);
     }
-
 }

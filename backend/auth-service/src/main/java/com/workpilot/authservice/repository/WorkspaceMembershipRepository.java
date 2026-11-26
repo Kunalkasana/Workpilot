@@ -14,4 +14,5 @@ public interface WorkspaceMembershipRepository extends JpaRepository<WorkspaceMe
     Optional<WorkspaceMembership> findByUser_IdAndWorkspace_Id(UUID userId, UUID workspaceId);
 
     boolean existsByUser_IdAndWorkspace_Id(UUID userId, UUID workspaceId);
+    Optional<WorkspaceMembership> findFirstByUser_IdOrderByJoinedAtAsc(UUID userId);
 }
